@@ -25,14 +25,14 @@
 
 # Assignments
 
-!assignments/maman11/*
-!assignments/maman12/*
-!assignments/maman13/*
+!assignments/maman11/**/*
+!assignments/maman12/**/*
+!assignments/maman13/**/*
 !assignments/README.md
 
 # Utilities
 
-!utils/scripts/*
+!utils/scripts/**/*
 !utils/libraries/**/*
 !utils/templates/**/*
 !utils/README.md
