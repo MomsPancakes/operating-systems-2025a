@@ -17,6 +17,10 @@
 
 !assets/*
 
+# Resources
+
+!resources/*
+
 # Exercises
 
 !exercises/book/**/*
@@ -25,9 +29,9 @@
 
 # Assignments
 
-!assignments/maman11/*
-!assignments/maman12/*
-!assignments/maman13/*
+!assignments/maman11/**/*
+!assignments/maman12/**/*
+!assignments/maman13/**/*
 !assignments/README.md
 
 # Utilities
