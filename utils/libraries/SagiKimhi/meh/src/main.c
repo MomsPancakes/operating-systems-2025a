@@ -1,12 +1,14 @@
 #include "meh_darray.h"
+#include "meh_misc.h"
+#include <string.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifndef MEH_SHORT_NAMESPACES
-#define MEH_SHORT_NAMESPACES
-#include "meh.h"
+#ifndef MEH_SHORT_NAMESPACE
+# define MEH_SHORT_NAMESPACE
+# include "meh.h"
 #endif
 
 /* -----------------------------------------------------------------------------
@@ -26,11 +28,11 @@ typedef struct booking booking_t;
 typedef struct request request_t;
 typedef struct response response_t;
 typedef struct registry registry_t;
-typedef struct process_info process_info_t;
 typedef struct travel_agent travel_agent_t;
 typedef struct booking_center booking_center_t;
 typedef struct booking_manager booking_manager_t;
 typedef struct booking_system booking_system_t;
+typedef struct airline_booking_system airline_system_t;
 
 /* -----------------------------------------------------------------------------
  * Constants
@@ -99,83 +101,197 @@ struct registry {
 struct travel_agent {
     id_t id;
     meh_darray_t booking_da;
-    process_info_t p_info;
+    meh_process_t p_info;
 };
 
 struct booking_center {
     meh_darray_t rsrved_da;
     meh_darray_t unrsrved_da;
-    process_info_t p_info;
+    meh_process_t p_info;
 };
 
 struct booking_manager {
     meh_darray_t flight_da;
     meh_darray_t registry_da;
-    process_info_t p_info;
+    meh_process_t p_info;
 };
 
-struct airline_system {
+struct airline_booking_system {
     meh_darray_t travel_agents;
     booking_center_t booking_center;
     booking_manager_t booking_manager;
-    process_info_t p_info;
+    meh_process_t p_info;
 };
+
+/* -----------------------------------------------------------------------------
+ * Method Declarations
+ * ----------------------------------------------------------------------------- */
+
+int
+airline_booking_system(void);
+
+airline_system_t
+airline_booking_system_create(void);
+
+booking_manager_t
+booking_manager_create(void);
+
+booking_center_t
+booking_center_create(void);
+
+travel_agent_t
+travel_agent_create(void);
+
+void
+airline_booking_system_destroy(airline_system_t *as);
+
+void
+booking_manager_destroy(booking_manager_t *bm);
+
+void
+booking_center_destroy(booking_center_t *bc);
+
+void
+travel_agent_destroy(travel_agent_t *ta);
 
 /* -----------------------------------------------------------------------------
  * Main
  * ----------------------------------------------------------------------------- */
-
-process_info_t
-pinfo(void)
-{
-    return (process_info_t){.pid = getpid()};
-}
-
-int
-airline_system(void)
-{
-    int ok;
-    size_t i;
-    travel_agent_t tmp_ta;
-    struct airline_system airline;
-
-    ok = 1;
-    airline = (struct airline_system){
-        .p_info = pinfo(),
-        .booking_center = {},
-        .booking_manager = {},
-        .travel_agents = darray.create(sizeof(travel_agent_t)),
-    };
-
-    meh_da_print(airline.travel_agents);
-
-    for (i = 0; ok && i < 15; i++) {
-        tmp_ta = (travel_agent_t){
-            .id = i,
-            .booking_da = darray.create(sizeof(booking_t)),
-        };
-        ok &= darray.append(&airline.travel_agents, &tmp_ta);
-    }
-
-    meh_da_print(airline.travel_agents);
-
-    if (ok) {
-        ok &= darray.extend(
-                  &airline.travel_agents,
-                  &airline.travel_agents.items,
-                  airline.travel_agents.size)
-              == meh_cast(int, airline.travel_agents.size);
-    }
-
-    meh_da_print(airline.travel_agents);
-    darray.destroy(&airline.travel_agents);
-    return ok;
-}
 
 int
 main(int argc, char *argv[])
 {
     meh_as_none(argc);
     meh_as_none(argv);
-    return airline_system() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return airline_booking_system() ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+/* -----------------------------------------------------------------------------
+ * Method Definitions
+ * ----------------------------------------------------------------------------- */
+
+int
+airline_booking_system(void)
+{
+    int ok = 1;
+    size_t i = 0;
+    travel_agent_t tmp = {0};
+    airline_system_t airline = {0};
+
+    airline = airline_booking_system_create();
+
+    for (i = 0, ok = 1; ok && i < 15; i++) {
+        tmp = travel_agent_create();
+        meh_check(darray.append(&airline.travel_agents, &tmp));
+    }
+
+    ok &= darray.extend(
+              &airline.travel_agents,
+              &airline.travel_agents.items,
+              airline.travel_agents.size)
+          == meh_cast(int, airline.travel_agents.size);
+
+    ok &= process.fork(&airline.p_info, 3);
+
+    if (getpid() != airline.p_info.pid)
+        airline_booking_system_destroy(&airline);
+
+    ok &= process.join(&airline.p_info);
+
+    airline_booking_system_destroy(&airline);
+
+    return ok;
+}
+
+airline_system_t
+airline_booking_system_create(void)
+{
+    airline_system_t as;
+
+    memset(&as, 0, sizeof(as));
+    as.p_info = process.self();
+    as.booking_center = booking_center_create();
+    as.booking_manager = booking_manager_create();
+    as.travel_agents = darray.create(sizeof(travel_agent_t));
+    return as;
+}
+
+void
+airline_booking_system_destroy(airline_system_t *as)
+{
+    if (as == NULL)
+        return;
+
+    while (as->travel_agents.size)
+        travel_agent_destroy(darray.pop(&as->travel_agents));
+
+    process.destroy(&as->p_info);
+    darray.destroy(&as->travel_agents);
+    booking_center_destroy(&as->booking_center);
+    booking_manager_destroy(&as->booking_manager);
+}
+
+booking_center_t
+booking_center_create(void)
+{
+    booking_center_t bc;
+
+    memset(&bc, 0, sizeof(bc));
+    bc.p_info = process.self();
+    bc.rsrved_da = darray.create(sizeof(seat_t));
+    bc.unrsrved_da = darray.create(sizeof(seat_t));
+    return bc;
+}
+
+void
+booking_center_destroy(booking_center_t *bc)
+{
+    if (bc != NULL) {
+        process.destroy(&bc->p_info);
+        darray.destroy(&bc->rsrved_da);
+        darray.destroy(&bc->unrsrved_da);
+    }
+}
+
+booking_manager_t
+booking_manager_create(void)
+{
+    booking_manager_t bm;
+
+    memset(&bm, 0, sizeof(bm));
+    bm.p_info = process.self();
+    bm.flight_da = darray.create(sizeof(flight_t));
+    bm.registry_da = darray.create(sizeof(registry_t));
+    return bm;
+}
+
+void
+booking_manager_destroy(booking_manager_t *bm)
+{
+    if (bm != NULL) {
+        process.destroy(&bm->p_info);
+        darray.destroy(&bm->flight_da);
+        darray.destroy(&bm->registry_da);
+    }
+}
+
+travel_agent_t
+travel_agent_create(void)
+{
+    travel_agent_t ta;
+    
+    memset(&ta, 0, sizeof(ta));
+    ta.id = getpid() - getppid();
+    ta.p_info = process.self();
+    ta.booking_da = darray.create(sizeof(booking_t));
+    return ta;
+}
+
+void
+travel_agent_destroy(travel_agent_t *ta)
+{
+    if (ta != NULL) {
+        process.destroy(&ta->p_info);
+        darray.destroy(&ta->booking_da);
+    }
 }

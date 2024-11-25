@@ -2,19 +2,19 @@
 #define MEH_MEMORY_MACROS_H_
 
 #ifndef meh_free
-#define meh_free(...) free(__VA_ARGS__)
+# define meh_free free
 #endif
 
 #ifndef meh_alloc
-#define meh_alloc malloc
+# define meh_alloc malloc
 #endif
 
 #ifndef meh_calloc
-#define meh_calloc calloc
+# define meh_calloc calloc
 #endif
 
 #ifndef meh_realloc
-#define meh_realloc realloc
+# define meh_realloc realloc
 #endif
 
 #endif

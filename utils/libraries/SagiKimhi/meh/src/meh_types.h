@@ -13,6 +13,7 @@
 
 typedef union meh_bitvec meh_bitvec_t;
 typedef struct meh_darray meh_darray_t;
+typedef struct meh_process meh_process_t;
 
 typedef char *str_t;
 

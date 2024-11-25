@@ -1,7 +1,6 @@
 #ifndef MEH_BITS_H_
 #define MEH_BITS_H_
 
-#include "meh_api.h"
 #include "meh_types.h"
 
 /* -----------------------------------------------------------------------------

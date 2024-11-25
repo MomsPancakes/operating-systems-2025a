@@ -27,6 +27,18 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
+# Options
+# -----------------------------------------------------------------------------
+
+# Verbosity
+
+ifneq ($(VERBOSE), true)
+	HIDE = @
+else
+	HIDE =
+endif
+
+# -----------------------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------------------
 
@@ -89,16 +101,6 @@ SET_YELLOW_TEXT:=@echo -n "\033[33m"
 SET_BLUE_TEXT:=@echo -n "\033[34m"
 
 SET_MAGNETA_TEXT:=@echo -n "\033[35m"
-
-# -----------------------------------------------------------------------------
-# Compilation Verbosity
-# -----------------------------------------------------------------------------
-
-ifneq ($(VERBOSE), true)
-	HIDE = @
-else
-	HIDE =
-endif
 
 # -----------------------------------------------------------------------------
 # Top Rules
@@ -195,6 +197,8 @@ $(TARGET_BINARY): $(TARGET_SHARED) src/main.c
 	@echo "$(BINARY): Linking $@..."
 	$(SET_WHITE_TEXT)
 	$(HIDE)$(CC) $(CFLAGS) $(LFLAGS) -o $@ $^ -lm -pthread -lmeh
+# ar rcu $(TARGET_STATIC) $(OBJECTS)
+# ranlib $(TARGET_STATIC)
 
 # Build Shared Lib
 # ----------------
@@ -276,7 +280,7 @@ endif
 # ----------------
 
 clean_target_dir: $(eval FIND_TARGET_DIR:=$(strip $(shell find . -type d -wholename $(TARGET_DIR) 2> /dev/null)))
-clean_target_dir: $(eval CLEAN_TARGET_DIR_CMD:=rmdir $(TARGET_DIR))
+clean_target_dir: $(eval CLEAN_TARGET_DIR_CMD:=rm -r $(TARGET_DIR))
 clean_target_dir:
 ifneq ($(FIND_TARGET_DIR),)
 	$(SET_YELLOW_TEXT)
