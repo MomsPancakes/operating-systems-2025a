@@ -1,0 +1,19 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-ansi",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I./src",
+      "-o",
+      "build/a.out",
+      "src/main.c"
+    ],
+    "directory": "/home/skimhi/.project/git/university/operating-systems-2025a/assignments/maman11/SagiKimhi/semaphore",
+    "file": "/home/skimhi/.project/git/university/operating-systems-2025a/assignments/maman11/SagiKimhi/semaphore/src/main.c",
+    "output": "/home/skimhi/.project/git/university/operating-systems-2025a/assignments/maman11/SagiKimhi/semaphore/build/a.out"
+  }
+]
